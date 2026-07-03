@@ -1,0 +1,14 @@
+name: WheatEconomy
+version: 1.0.0
+main: io.github.pineconelp.wheateconomy.WheatEconomyPlugin
+description: A wheat-based economy exposed through the Vault API.
+author: PineconeLP
+api-version: '1.21'
+softdepend: [Vault]
+permissions:
+  wheateconomy.bank:
+    description: Allow player to use bank commands
+    default: true
+  wheateconomy.bank.admin:
+    description: Allow player to use bank admin commands
+    default: op
