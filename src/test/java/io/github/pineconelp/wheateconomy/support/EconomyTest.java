@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.MockBukkit;
 import org.mockbukkit.mockbukkit.ServerMock;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
+import org.mockbukkit.mockbukkit.scheduler.BukkitSchedulerMock;
 
 import io.github.pineconelp.wheateconomy.WheatEconomyPlugin;
 
@@ -41,9 +42,19 @@ public abstract class EconomyTest {
   }
 
   protected void drainScheduler() {
-    for (int i = 0; i < 5; i++) {
-      server.getScheduler().waitAsyncTasksFinished();
-      server.getScheduler().performTicks(1);
+    BukkitSchedulerMock scheduler = server.getScheduler();
+    scheduler.waitAsyncTasksFinished();
+
+    // TODO: https://github.com/MockBukkit/MockBukkit/issues/1586
+    for (int attempt = 0; attempt < 10; attempt++) {
+      scheduler.waitAsyncTasksFinished();
+      scheduler.performTicks(10);
+
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 

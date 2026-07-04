@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("com.gradleup.shadow") version "8.3.0"
+    id("eclipse")
 }
 
 group = "io.github.pineconelp"
