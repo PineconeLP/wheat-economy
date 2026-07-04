@@ -116,7 +116,7 @@ public class Bank {
 
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
-        bankRepository.depositByPlayerId(player.getUniqueId(), amountToDeposit);
+        bankRepository.depositByPlayerId(player.getUniqueId(), amountToDeposit, LedgerEntryType.DEPOSIT);
         Bukkit.getLogger().log(Level.INFO, "BANK_DEPOSIT " + player.getName() + " " + amountToDeposit);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
@@ -244,7 +244,8 @@ public class Bank {
 
           Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
-              boolean withdrawn = bankRepository.withdrawByPlayerId(player.getUniqueId(), wheatToDeduct);
+              boolean withdrawn = bankRepository.withdrawByPlayerId(player.getUniqueId(), wheatToDeduct,
+                  LedgerEntryType.WITHDRAW);
 
               if (!withdrawn) {
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -411,7 +412,7 @@ public class Bank {
 
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
-        bankRepository.depositByPlayerId(targetPlayerId, amount);
+        bankRepository.depositByPlayerId(targetPlayerId, amount, LedgerEntryType.ADMIN_ADD);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
               Component.text("Done.", NamedTextColor.GREEN));

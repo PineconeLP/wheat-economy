@@ -2,13 +2,31 @@ package io.github.pineconelp.wheateconomy.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
+
 import org.bukkit.Material;
 import org.junit.jupiter.api.Test;
 import org.mockbukkit.mockbukkit.entity.PlayerMock;
 
+import io.github.pineconelp.wheateconomy.bank.LedgerEntryType;
 import io.github.pineconelp.wheateconomy.support.EconomyTest;
 
 class BankDepositTest extends EconomyTest {
+
+  @Test
+  void deposit_recordsALedgerEntry() throws Exception {
+    PlayerMock player = addPlayerWithItems(Material.WHEAT, 64);
+
+    player.performCommand("bank deposit wheat 10");
+    drainScheduler();
+
+    List<LedgerEntry> ledger = ledgerOf(player.getUniqueId());
+    assertEquals(1, ledger.size());
+    assertEquals(LedgerEntryType.DEPOSIT.name(), ledger.get(0).type());
+    assertEquals(10, ledger.get(0).balanceChange());
+    assertEquals(10, ledger.get(0).balanceAfter());
+    assertEquals(null, ledger.get(0).targetPlayerId());
+  }
 
   @Test
   void depositAll_movesAllWheatFromInventoryToBank() throws Exception {

@@ -11,6 +11,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.Plugin;
 
 import io.github.pineconelp.wheateconomy.bank.BankRepository;
+import io.github.pineconelp.wheateconomy.bank.LedgerEntryType;
 
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
@@ -180,7 +181,7 @@ public class WheatEconomyProvider implements Economy {
     }
 
     try {
-      boolean withdrawn = bankRepository.withdrawByPlayerId(playerId, amt);
+      boolean withdrawn = bankRepository.withdrawByPlayerId(playerId, amt, LedgerEntryType.WITHDRAW);
       int balance = readBalance(playerId);
 
       if (!withdrawn) {
@@ -219,7 +220,7 @@ public class WheatEconomyProvider implements Economy {
     }
 
     try {
-      bankRepository.depositByPlayerId(playerId, amt);
+      bankRepository.depositByPlayerId(playerId, amt, LedgerEntryType.DEPOSIT);
       return success(amt, readBalance(playerId));
     } catch (SQLException e) {
       plugin.getLogger().log(Level.SEVERE, "Vault deposit failed for " + playerId, e);

@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Material;
@@ -80,6 +82,33 @@ public abstract class EconomyTest {
         return rs.getInt("balance");
       }
     }
+  }
+
+  protected record LedgerEntry(String type, int balanceChange, int balanceAfter, UUID targetPlayerId) {
+  }
+
+  protected List<LedgerEntry> ledgerOf(UUID playerId) throws SQLException {
+    List<LedgerEntry> entries = new ArrayList<>();
+
+    try (PreparedStatement stmt = keepAlive.prepareStatement(
+        "SELECT type, balance_change, balance_after, target_player_id FROM bank_ledger " +
+            "WHERE player_id = ? ORDER BY created_at, rowid")) {
+      stmt.setString(1, playerId.toString());
+
+      try (ResultSet rs = stmt.executeQuery()) {
+        while (rs.next()) {
+          String targetPlayerId = rs.getString("target_player_id");
+
+          entries.add(new LedgerEntry(
+              rs.getString("type"),
+              rs.getInt("balance_change"),
+              rs.getInt("balance_after"),
+              targetPlayerId == null ? null : UUID.fromString(targetPlayerId)));
+        }
+      }
+    }
+
+    return entries;
   }
 
   protected void seedBalance(UUID playerId, int amount) throws SQLException {
