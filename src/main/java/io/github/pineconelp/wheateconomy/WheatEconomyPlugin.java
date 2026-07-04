@@ -2,6 +2,7 @@ package io.github.pineconelp.wheateconomy;
 
 import java.sql.SQLException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -51,8 +52,7 @@ public class WheatEconomyPlugin extends JavaPlugin {
         commands.register(new BankCommand(bank).create(), "Wheat economy bank commands");
       });
     } catch (SQLException e) {
-      getLogger().severe("Failed to initialize the wheat economy database. Disabling plugin.");
-      e.printStackTrace();
+      getLogger().log(Level.SEVERE, "Failed to initialize the wheat economy database. Disabling plugin.", e);
       getServer().getPluginManager().disablePlugin(this);
       return;
     }

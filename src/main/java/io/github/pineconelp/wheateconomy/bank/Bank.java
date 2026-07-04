@@ -71,9 +71,21 @@ public class Bank {
     try {
       return this.bankRepository.getBalanceByPlayerId(playerId);
     } catch (SQLException e) {
-      e.printStackTrace();
+      plugin.getLogger().log(Level.SEVERE, "Failed to read bank balance for " + playerId, e);
       return -1;
     }
+  }
+
+  private void logTransaction(LedgerEntryType type, UUID playerId, String playerName, int amount) {
+    plugin.getLogger().info(
+        "BANK_" + type.name() + " player=" + playerName + " uuid=" + playerId + " amount=" + amount);
+  }
+
+  private void logTransfer(UUID senderId, String senderName, UUID targetId, String targetName, int amount) {
+    plugin.getLogger().info("BANK_SEND"
+        + " sender=" + senderName + " senderUuid=" + senderId
+        + " target=" + targetName + " targetUuid=" + targetId
+        + " amount=" + amount);
   }
 
   public void deposit(Player player, DepositStrategy strategy) {
@@ -117,14 +129,14 @@ public class Bank {
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
         bankRepository.depositByPlayerId(player.getUniqueId(), amountToDeposit, LedgerEntryType.DEPOSIT);
-        Bukkit.getLogger().log(Level.INFO, "BANK_DEPOSIT " + player.getName() + " " + amountToDeposit);
+        logTransaction(LedgerEntryType.DEPOSIT, playerId, player.getName(), amountToDeposit);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
           strategy.sendDepositSuccessMessage(player, playerHayBaleAmount, playerWheatAmount);
           transactingPlayerIds.remove(playerId);
         });
       } catch (SQLException e) {
-        e.printStackTrace();
+        plugin.getLogger().log(Level.SEVERE, "Failed to deposit wheat for " + playerId, e);
         Bukkit.getScheduler().runTask(plugin, () -> {
           player.sendMessage(Component.text("Failed to deposit. Please try again later.", NamedTextColor.RED));
         });
@@ -255,7 +267,7 @@ public class Bank {
                 return;
               }
 
-              Bukkit.getLogger().log(Level.INFO, "BANK_WITHDRAW " + player.getName() + " " + wheatToDeduct);
+              logTransaction(LedgerEntryType.WITHDRAW, playerId, player.getName(), wheatToDeduct);
 
               Bukkit.getScheduler().runTask(plugin, () -> {
                 strategy.giveItemsToPlayer(player, wheatToDeduct);
@@ -263,7 +275,7 @@ public class Bank {
                 transactingPlayerIds.remove(playerId);
               });
             } catch (SQLException e) {
-              e.printStackTrace();
+              plugin.getLogger().log(Level.SEVERE, "Failed to withdraw wheat for " + playerId, e);
               Bukkit.getScheduler().runTask(plugin, () -> {
                 player.sendMessage(Component.text("Failed to withdraw. Please try again.", NamedTextColor.RED));
               });
@@ -272,7 +284,7 @@ public class Bank {
           });
         });
       } catch (SQLException e) {
-        e.printStackTrace();
+        plugin.getLogger().log(Level.SEVERE, "Failed to read bank balance for " + player.getUniqueId(), e);
         Bukkit.getScheduler().runTask(plugin, () -> {
           player.sendMessage(Component.text("Failed to withdraw. Please try again.", NamedTextColor.RED));
         });
@@ -332,8 +344,7 @@ public class Bank {
           return;
         }
 
-        Bukkit.getLogger().log(Level.INFO,
-            "BANK_SEND " + sender.getName() + " " + targetPlayerName + " " + amountToSend);
+        logTransfer(senderId, sender.getName(), targetId, targetPlayerName, amountToSend);
 
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
@@ -346,7 +357,7 @@ public class Bank {
           transactingPlayerIds.remove(targetId);
         });
       } catch (SQLException ex) {
-        ex.printStackTrace();
+        plugin.getLogger().log(Level.SEVERE, "Failed to transfer wheat from " + senderId + " to " + targetId, ex);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(Component.text("Failed to transfer wheat. Please try again.", NamedTextColor.RED));
         });
@@ -383,13 +394,14 @@ public class Bank {
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
         bankRepository.setBalanceByPlayerId(targetPlayerId, amount);
+        logTransaction(LedgerEntryType.ADMIN_SET, targetPlayerId, playerName, amount);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
               Component.text("Done.", NamedTextColor.GREEN));
         });
         transactingPlayerIds.remove(targetPlayerId);
       } catch (SQLException e) {
-        e.printStackTrace();
+        plugin.getLogger().log(Level.SEVERE, "Failed to set bank balance for " + targetPlayerId, e);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
               Component.text("Error.", NamedTextColor.RED));
@@ -413,13 +425,14 @@ public class Bank {
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
         bankRepository.depositByPlayerId(targetPlayerId, amount, LedgerEntryType.ADMIN_ADD);
+        logTransaction(LedgerEntryType.ADMIN_ADD, targetPlayerId, playerName, amount);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
               Component.text("Done.", NamedTextColor.GREEN));
         });
         transactingPlayerIds.remove(targetPlayerId);
       } catch (SQLException e) {
-        e.printStackTrace();
+        plugin.getLogger().log(Level.SEVERE, "Failed to add bank balance for " + targetPlayerId, e);
         Bukkit.getScheduler().runTask(plugin, () -> {
           sender.sendMessage(
               Component.text("Error.", NamedTextColor.RED));
