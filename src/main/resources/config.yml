@@ -1,0 +1,2 @@
+database:
+  jdbc-url: "jdbc:sqlite:plugins/WheatEconomy/wheateconomy.db"

@@ -1,9 +1,6 @@
 package io.github.pineconelp.wheateconomy;
 
-import java.io.File;
 import java.sql.SQLException;
-import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.bukkit.plugin.ServicePriority;
@@ -28,6 +25,8 @@ public class WheatEconomyPlugin extends JavaPlugin {
     if (!getDataFolder().exists()) {
       getDataFolder().mkdirs();
     }
+
+    saveDefaultConfig();
 
     try {
       this.dataSource = createDataSource();
@@ -67,12 +66,10 @@ public class WheatEconomyPlugin extends JavaPlugin {
   }
 
   private HikariDataSource createDataSource() {
-    File dbFile = new File(getDataFolder(), "wheateconomy.db");
-
     HikariConfig hikariConfig = new HikariConfig();
     hikariConfig.setPoolName("WheatEconomy");
     hikariConfig.setDriverClassName("org.sqlite.JDBC");
-    hikariConfig.setJdbcUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
+    hikariConfig.setJdbcUrl(getConfig().getString("database.jdbc-url"));
     hikariConfig.setMaximumPoolSize(1);
     hikariConfig.setMaxLifetime(0);
     hikariConfig.setConnectionInitSql("PRAGMA busy_timeout=5000");

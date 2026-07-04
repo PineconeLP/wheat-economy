@@ -1,0 +1,2 @@
+database:
+  jdbc-url: "jdbc:sqlite:file:wheateconomy-test?mode=memory&cache=shared"
