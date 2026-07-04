@@ -71,6 +71,45 @@ public class BankRepository {
     }
   }
 
+  public boolean transferByPlayerId(UUID senderId, UUID targetId, int amount) throws SQLException {
+    try (Connection conn = dataSource.getConnection()) {
+      conn.setAutoCommit(false);
+
+      try {
+        int debited;
+
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "UPDATE bank_accounts SET balance = balance - ? WHERE player_id = ? AND balance >= ?")) {
+          stmt.setLong(1, amount);
+          stmt.setString(2, senderId.toString());
+          stmt.setLong(3, amount);
+          debited = stmt.executeUpdate();
+        }
+
+        if (debited != 1) {
+          conn.rollback();
+          return false;
+        }
+
+        try (PreparedStatement stmt = conn.prepareStatement(
+            "INSERT INTO bank_accounts (id, player_id, balance) VALUES (?, ?, ?) " +
+                "ON CONFLICT(player_id) DO UPDATE SET balance = balance + ?")) {
+          stmt.setString(1, UUID.randomUUID().toString());
+          stmt.setString(2, targetId.toString());
+          stmt.setLong(3, amount);
+          stmt.setLong(4, amount);
+          stmt.executeUpdate();
+        }
+
+        conn.commit();
+        return true;
+      } catch (SQLException e) {
+        conn.rollback();
+        throw e;
+      }
+    }
+  }
+
   public void setBalanceByPlayerId(UUID playerId, int amount) throws SQLException {
     try (Connection conn = dataSource.getConnection()) {
       try (PreparedStatement stmt = conn.prepareStatement(

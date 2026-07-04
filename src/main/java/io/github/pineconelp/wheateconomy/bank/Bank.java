@@ -317,9 +317,9 @@ public class Bank {
 
     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
       try {
-        boolean withdrawn = bankRepository.withdrawByPlayerId(senderId, amountToSend);
+        boolean transferred = bankRepository.transferByPlayerId(senderId, targetId, amountToSend);
 
-        if (!withdrawn) {
+        if (!transferred) {
           int senderBalance = bankRepository.getBalanceByPlayerId(senderId);
           Bukkit.getScheduler().runTask(plugin, () -> {
             sender.sendMessage(
@@ -331,7 +331,6 @@ public class Bank {
           return;
         }
 
-        bankRepository.depositByPlayerId(targetId, amountToSend);
         Bukkit.getLogger().log(Level.INFO,
             "BANK_SEND " + sender.getName() + " " + targetPlayerName + " " + amountToSend);
 
