@@ -17,11 +17,18 @@ repositories {
         name = "jitpack"
         url = uri("https://jitpack.io")
     }
+    maven {
+        name = "codemc"
+        url = uri("https://repo.codemc.io/repository/creatorfromhell/")
+    }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
+    compileOnly("net.milkbowl.vault:VaultUnlockedAPI:2.20") {
         exclude(group = "org.bukkit", module = "bukkit")
     }
     implementation("com.zaxxer:HikariCP:5.1.0")

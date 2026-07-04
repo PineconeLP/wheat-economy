@@ -17,13 +17,13 @@ import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import net.milkbowl.vault.economy.EconomyResponse.ResponseType;
 
-public class WheatEconomyProvider implements Economy {
+public class WheatEconomyVaultProvider implements Economy {
   private static final String CURRENCY = "Wheat";
 
   private final Plugin plugin;
   private final BankRepository bankRepository;
 
-  public WheatEconomyProvider(Plugin plugin, BankRepository bankRepository) {
+  public WheatEconomyVaultProvider(Plugin plugin, BankRepository bankRepository) {
     this.plugin = plugin;
     this.bankRepository = bankRepository;
   }

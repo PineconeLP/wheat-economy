@@ -10,7 +10,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import io.github.pineconelp.wheateconomy.bank.BankRepository;
 import io.github.pineconelp.wheateconomy.bank.Bank;
 import io.github.pineconelp.wheateconomy.commands.BankCommand;
-import io.github.pineconelp.wheateconomy.vault.WheatEconomyProvider;
+import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultProvider;
+import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultUnlockedProvider;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -38,12 +39,21 @@ public class WheatEconomyPlugin extends JavaPlugin {
       Bank bank = new Bank(bankRepository, this, ConcurrentHashMap.newKeySet());
 
       if (getServer().getPluginManager().getPlugin("Vault") != null) {
-        WheatEconomyProvider economyProvider = new WheatEconomyProvider(this, bankRepository);
+        WheatEconomyVaultProvider economyProvider = new WheatEconomyVaultProvider(this, bankRepository);
 
         getServer().getServicesManager().register(Economy.class, economyProvider, this, ServicePriority.Normal);
         getLogger().info("Registered Vault economy provider: WheatEconomy");
       } else {
         getLogger().warning("Vault not found; skipping economy provider registration. Bank commands remain available.");
+      }
+
+      if (getServer().getPluginManager().getPlugin("VaultUnlocked") != null) {
+        WheatEconomyVaultUnlockedProvider unlockedProvider = new WheatEconomyVaultUnlockedProvider(this, bankRepository);
+
+        getServer().getServicesManager().register(net.milkbowl.vault2.economy.Economy.class, unlockedProvider, this, ServicePriority.Normal);
+        getLogger().info("Registered VaultUnlocked economy provider: WheatEconomy");
+      } else {
+        getLogger().warning("VaultUnlocked not found; skipping VaultUnlocked economy provider registration. Bank commands remain available.");
       }
 
       this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
