@@ -1,7 +1,8 @@
 plugins {
-    id("java")
+    id("java-library")
     id("com.gradleup.shadow") version "8.3.0"
     id("eclipse")
+    id("maven-publish")
 }
 
 group = "io.github.pineconelp"
@@ -50,10 +51,18 @@ tasks.test {
 }
 
 tasks.shadowJar {
-    archiveClassifier.set("")
+    archiveClassifier.set("plugin")
     relocate("com.zaxxer.hikari", "io.github.pineconelp.wheateconomy.libs.hikari")
 }
 
 tasks.build {
     dependsOn(tasks.shadowJar)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+        }
+    }
 }
