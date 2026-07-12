@@ -79,7 +79,8 @@ public class WheatEconomyPlugin extends JavaPlugin {
           ? worldGuardBankerRegion
           : new AlwaysNearBankerPolicy();
 
-      wheatGrowthSimulator = new WheatGrowthSimulator(this);
+      boolean offlineGrowthEnabled = getConfig().getBoolean("wheat.offline-growth-enabled", true);
+      wheatGrowthSimulator = new WheatGrowthSimulator(this, offlineGrowthEnabled);
 
       getServer().getPluginManager()
           .registerEvents(new BankTransactionListener(transactingPlayerIds), this);

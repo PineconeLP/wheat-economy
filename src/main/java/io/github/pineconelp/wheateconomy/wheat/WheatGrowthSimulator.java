@@ -23,12 +23,12 @@ public class WheatGrowthSimulator {
   private final double OFFLINE_WHEAT_GROWTH_PROBABILITY_PER_RANDOM_TICK = 0.05;
   private final double SECONDS_PER_RANDOM_TICK = 68.27;
 
-  private boolean offlineGrowthEnabled;
+  private final boolean offlineGrowthEnabled;
   private final Random random;
   private NamespacedKey chunkUnloadTimestampKey;
 
-  public WheatGrowthSimulator(Plugin plugin) {
-    this.offlineGrowthEnabled = true;
+  public WheatGrowthSimulator(Plugin plugin, boolean offlineGrowthEnabled) {
+    this.offlineGrowthEnabled = offlineGrowthEnabled;
     this.random = new Random();
     this.chunkUnloadTimestampKey = new NamespacedKey(plugin, "chunk-unload-timestamp");
   }
@@ -150,9 +150,5 @@ public class WheatGrowthSimulator {
 
   public boolean isOfflineGrowthEnabled() {
     return this.offlineGrowthEnabled;
-  }
-
-  public void toggleOfflineGrowthEnabled(boolean enabled) {
-    this.offlineGrowthEnabled = enabled;
   }
 }
