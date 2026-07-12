@@ -1,10 +1,9 @@
 package io.github.pineconelp.wheateconomy.api;
 
-import java.sql.SQLException;
-import java.util.List;
-
-import io.github.pineconelp.wheateconomy.bank.BankAccount;
+import org.bukkit.entity.Player;
 
 public interface WheatEconomyApi {
-  List<BankAccount> getTopAccounts(int limit) throws SQLException;
+  void openBankSummary(Player player);
+
+  void openBankLeaderboard(Player player);
 }

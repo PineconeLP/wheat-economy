@@ -1,6 +1,8 @@
 package io.github.pineconelp.wheateconomy;
 
 import java.sql.SQLException;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
@@ -9,9 +11,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import io.github.pineconelp.wheateconomy.api.WheatEconomyApi;
 import io.github.pineconelp.wheateconomy.api.WheatEconomyApiProvider;
+import io.github.pineconelp.wheateconomy.bank.BankLeaderboard;
 import io.github.pineconelp.wheateconomy.bank.BankRepository;
 import io.github.pineconelp.wheateconomy.bank.Bank;
 import io.github.pineconelp.wheateconomy.commands.BankCommand;
+import io.github.pineconelp.wheateconomy.listeners.BankTransactionListener;
 import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultProvider;
 import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultUnlockedProvider;
 import com.zaxxer.hikari.HikariConfig;
@@ -38,10 +42,15 @@ public class WheatEconomyPlugin extends JavaPlugin {
       BankRepository bankRepository = new BankRepository(dataSource);
       bankRepository.initialize();
 
-      Bank bank = new Bank(bankRepository, this, ConcurrentHashMap.newKeySet());
+      Set<UUID> transactingPlayerIds = ConcurrentHashMap.newKeySet();
+
+      Bank bank = new Bank(bankRepository, this, transactingPlayerIds);
+      BankLeaderboard bankLeaderboard = new BankLeaderboard(bankRepository, this);
+
+      getServer().getPluginManager().registerEvents(new BankTransactionListener(transactingPlayerIds), this);
 
       getServer().getServicesManager().register(
-          WheatEconomyApi.class, new WheatEconomyApiProvider(bankRepository), this, ServicePriority.Normal);
+          WheatEconomyApi.class, new WheatEconomyApiProvider(bank, bankLeaderboard), this, ServicePriority.Normal);
       getLogger().info("Registered WheatEconomy API service.");
 
       if (getServer().getPluginManager().getPlugin("Vault") != null) {
@@ -72,7 +81,7 @@ public class WheatEconomyPlugin extends JavaPlugin {
       this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
         Commands commands = event.registrar();
 
-        commands.register(new BankCommand(bank).create(), "Wheat economy bank commands");
+        commands.register(new BankCommand(bank, bankLeaderboard).create(), "Wheat economy bank commands");
       });
     } catch (SQLException e) {
       getLogger().log(Level.SEVERE, "Failed to initialize the wheat economy database. Disabling plugin.", e);

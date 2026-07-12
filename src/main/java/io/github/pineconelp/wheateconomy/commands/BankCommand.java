@@ -14,6 +14,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.github.pineconelp.wheateconomy.bank.Bank;
+import io.github.pineconelp.wheateconomy.bank.BankLeaderboard;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllHayBalesStrategy;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllStrategy;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllWheatStrategy;
@@ -31,15 +32,18 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 public class BankCommand {
   private Bank bank;
+  private BankLeaderboard bankLeaderboard;
 
-  public BankCommand(Bank bank) {
+  public BankCommand(Bank bank, BankLeaderboard bankLeaderboard) {
     super();
 
     this.bank = bank;
+    this.bankLeaderboard = bankLeaderboard;
   }
 
   public LiteralCommandNode<CommandSourceStack> create() {
     return Commands.literal("bank")
+        .then(createLeaderboardCommand())
         .then(createBalanceCommand())
         .then(createDepositCommand())
         .then(createWithdrawCommand())
@@ -48,6 +52,22 @@ public class BankCommand {
         .then(createSetCommand())
         .then(createAddCommand())
         .build();
+  }
+
+  private LiteralArgumentBuilder<CommandSourceStack> createLeaderboardCommand() {
+    return Commands.literal("leaderboard")
+        .requires(ctx -> ctx.getSender().hasPermission("wheateconomy.bank"))
+        .executes((ctx) -> {
+          CommandSender sender = ctx.getSource().getSender();
+
+          if (notifyNotPlayer(sender)) {
+            return Command.SINGLE_SUCCESS;
+          }
+
+          bankLeaderboard.open((Player) sender);
+
+          return Command.SINGLE_SUCCESS;
+        });
   }
 
   private LiteralArgumentBuilder<CommandSourceStack> createBalanceCommand() {

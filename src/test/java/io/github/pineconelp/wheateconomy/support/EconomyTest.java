@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.sqlite.SQLiteDataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockbukkit.mockbukkit.MockBukkit;
@@ -56,6 +59,12 @@ public abstract class EconomyTest {
         Thread.currentThread().interrupt();
       }
     }
+  }
+
+  protected DataSource testDataSource() {
+    SQLiteDataSource dataSource = new SQLiteDataSource();
+    dataSource.setUrl(TEST_JDBC_URL);
+    return dataSource;
   }
 
   protected PlayerMock addPlayer() {
