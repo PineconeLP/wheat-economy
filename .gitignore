@@ -34,3 +34,6 @@ Thumbs.db
 
 # Logs / local runtime
 *.log
+
+# Local scripts 
+scripts/

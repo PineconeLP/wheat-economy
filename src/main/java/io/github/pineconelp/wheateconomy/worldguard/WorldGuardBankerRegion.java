@@ -15,7 +15,7 @@ import com.sk89q.worldguard.protection.regions.RegionQuery;
 import io.github.pineconelp.wheateconomy.bank.BankerLocationPolicy;
 
 public class WorldGuardBankerRegion implements BankerLocationPolicy {
-  public static final StateFlag HAS_BANKER_FLAG = new StateFlag("has-banker", false);
+  public static final StateFlag HAS_BANKER_FLAG = new StateFlag("has-banker", true);
 
   public void registerFlag() {
     FlagRegistry registry = WorldGuard.getInstance().getFlagRegistry();
