@@ -7,6 +7,8 @@ import java.util.logging.Level;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.github.pineconelp.wheateconomy.api.WheatEconomyApi;
+import io.github.pineconelp.wheateconomy.api.WheatEconomyApiProvider;
 import io.github.pineconelp.wheateconomy.bank.BankRepository;
 import io.github.pineconelp.wheateconomy.bank.Bank;
 import io.github.pineconelp.wheateconomy.commands.BankCommand;
@@ -38,6 +40,10 @@ public class WheatEconomyPlugin extends JavaPlugin {
 
       Bank bank = new Bank(bankRepository, this, ConcurrentHashMap.newKeySet());
 
+      getServer().getServicesManager().register(
+          WheatEconomyApi.class, new WheatEconomyApiProvider(bankRepository), this, ServicePriority.Normal);
+      getLogger().info("Registered WheatEconomy API service.");
+
       if (getServer().getPluginManager().getPlugin("Vault") != null) {
         WheatEconomyVaultProvider economyProvider = new WheatEconomyVaultProvider(this, bankRepository);
 
@@ -47,11 +53,18 @@ public class WheatEconomyPlugin extends JavaPlugin {
         getLogger().warning("Vault not found; skipping economy provider registration. Bank commands remain available.");
       }
 
-      if (getServer().getPluginManager().getPlugin("VaultUnlocked") != null) {
-        WheatEconomyVaultUnlockedProvider unlockedProvider = new WheatEconomyVaultUnlockedProvider(this, bankRepository);
+      boolean vaultLikePluginPresent = getServer().getPluginManager().getPlugin("VaultUnlocked") != null
+          || getServer().getPluginManager().getPlugin("Vault") != null;
 
-        getServer().getServicesManager().register(net.milkbowl.vault2.economy.Economy.class, unlockedProvider, this, ServicePriority.Normal);
-        getLogger().info("Registered VaultUnlocked economy provider: WheatEconomy");
+      if (vaultLikePluginPresent) {
+        try {
+          WheatEconomyVaultUnlockedProvider unlockedProvider = new WheatEconomyVaultUnlockedProvider(this, bankRepository);
+
+          getServer().getServicesManager().register(net.milkbowl.vault2.economy.Economy.class, unlockedProvider, this, ServicePriority.Normal);
+          getLogger().info("Registered VaultUnlocked economy provider: WheatEconomy");
+        } catch (Throwable t) {
+          getLogger().warning("VaultUnlocked (Vault2) API not available; skipping VaultUnlocked economy provider registration. Bank commands remain available.");
+        }
       } else {
         getLogger().warning("VaultUnlocked not found; skipping VaultUnlocked economy provider registration. Bank commands remain available.");
       }

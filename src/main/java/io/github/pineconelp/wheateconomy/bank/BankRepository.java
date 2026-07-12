@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -59,6 +61,27 @@ public class BankRepository {
             return 0;
           }
           return rs.getInt("balance");
+        }
+      }
+    }
+  }
+
+  public List<BankAccount> getTopAccounts(int limit) throws SQLException {
+    try (Connection conn = dataSource.getConnection()) {
+      try (PreparedStatement stmt = conn.prepareStatement(
+          "SELECT player_id, balance FROM bank_accounts ORDER BY balance DESC, player_id ASC LIMIT ?")) {
+        stmt.setInt(1, limit);
+
+        try (ResultSet rs = stmt.executeQuery()) {
+          List<BankAccount> accounts = new ArrayList<>();
+
+          while (rs.next()) {
+            accounts.add(new BankAccount(
+                UUID.fromString(rs.getString("player_id")),
+                rs.getInt("balance")));
+          }
+
+          return accounts;
         }
       }
     }
