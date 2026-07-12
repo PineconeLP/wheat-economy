@@ -67,6 +67,19 @@ public class Bank {
     });
   }
 
+  public void showBalance(Player player) {
+    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+      int balance = getBalanceDisplay(player.getUniqueId());
+
+      Bukkit.getScheduler().runTask(plugin, () -> {
+        player.sendMessage(
+            Component.text("=== Bank ===", NamedTextColor.GOLD));
+        player.sendMessage(
+            Component.text("Your Balance: " + balance + " Wheat", NamedTextColor.GRAY));
+      });
+    });
+  }
+
   private int getBalanceDisplay(UUID playerId) {
     try {
       return this.bankRepository.getBalanceByPlayerId(playerId);

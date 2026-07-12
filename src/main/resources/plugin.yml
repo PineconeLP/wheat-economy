@@ -4,6 +4,7 @@ main: io.github.pineconelp.wheateconomy.WheatEconomyPlugin
 description: A wheat-based economy exposed through the Vault and VaultUnlocked APIs.
 author: PineconeLP
 api-version: '1.21'
+depend: [WorldGuard]
 softdepend: [Vault, VaultUnlocked]
 permissions:
   wheateconomy.bank:

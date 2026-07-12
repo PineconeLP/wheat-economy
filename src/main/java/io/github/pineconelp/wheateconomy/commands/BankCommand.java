@@ -15,6 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.github.pineconelp.wheateconomy.bank.Bank;
 import io.github.pineconelp.wheateconomy.bank.BankLeaderboard;
+import io.github.pineconelp.wheateconomy.bank.BankerLocationPolicy;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllHayBalesStrategy;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllStrategy;
 import io.github.pineconelp.wheateconomy.bank.deposit.DepositAllWheatStrategy;
@@ -33,12 +34,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 public class BankCommand {
   private Bank bank;
   private BankLeaderboard bankLeaderboard;
+  private BankerLocationPolicy locationPolicy;
 
-  public BankCommand(Bank bank, BankLeaderboard bankLeaderboard) {
+  public BankCommand(Bank bank, BankLeaderboard bankLeaderboard, BankerLocationPolicy locationPolicy) {
     super();
 
     this.bank = bank;
     this.bankLeaderboard = bankLeaderboard;
+    this.locationPolicy = locationPolicy;
   }
 
   public LiteralCommandNode<CommandSourceStack> create() {
@@ -82,7 +85,11 @@ public class BankCommand {
 
           Player player = (Player) sender;
 
-          bank.showSummary(player);
+          if (locationPolicy.isNearBanker(player)) {
+            bank.showSummary(player);
+          } else {
+            bank.showBalance(player);
+          }
 
           return Command.SINGLE_SUCCESS;
         });
@@ -289,7 +296,19 @@ public class BankCommand {
   private boolean notifyCannotRunCommand(CommandContext<CommandSourceStack> ctx) {
     CommandSender sender = ctx.getSource().getSender();
 
-    return notifyNotPlayer(sender);
+    if (notifyNotPlayer(sender)) {
+      return true;
+    }
+
+    Player player = (Player) sender;
+
+    if (!locationPolicy.isNearBanker(player)) {
+      player.sendMessage(
+          Component.text("You must be near a banker to interact with the bank.", NamedTextColor.RED));
+      return true;
+    }
+
+    return false;
   }
 
   private boolean notifyNotPlayer(CommandSender sender) {

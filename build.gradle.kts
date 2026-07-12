@@ -22,6 +22,10 @@ repositories {
         name = "codemc"
         url = uri("https://repo.codemc.io/repository/creatorfromhell/")
     }
+    maven {
+        name = "enginehub"
+        url = uri("https://maven.enginehub.org/repo/")
+    }
 }
 
 dependencies {
@@ -32,6 +36,7 @@ dependencies {
     compileOnly("net.milkbowl.vault:VaultUnlockedAPI:2.20") {
         exclude(group = "org.bukkit", module = "bukkit")
     }
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.16")
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 

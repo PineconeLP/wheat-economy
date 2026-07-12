@@ -11,11 +11,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import io.github.pineconelp.wheateconomy.api.WheatEconomyApi;
 import io.github.pineconelp.wheateconomy.api.WheatEconomyApiProvider;
+import io.github.pineconelp.wheateconomy.bank.AlwaysNearBankerPolicy;
 import io.github.pineconelp.wheateconomy.bank.BankLeaderboard;
 import io.github.pineconelp.wheateconomy.bank.BankRepository;
 import io.github.pineconelp.wheateconomy.bank.Bank;
+import io.github.pineconelp.wheateconomy.bank.BankerLocationPolicy;
 import io.github.pineconelp.wheateconomy.commands.BankCommand;
 import io.github.pineconelp.wheateconomy.listeners.BankTransactionListener;
+import io.github.pineconelp.wheateconomy.worldguard.WorldGuardBankerRegion;
 import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultProvider;
 import io.github.pineconelp.wheateconomy.vault.WheatEconomyVaultUnlockedProvider;
 import com.zaxxer.hikari.HikariConfig;
@@ -27,6 +30,18 @@ import net.milkbowl.vault.economy.Economy;
 
 public class WheatEconomyPlugin extends JavaPlugin {
   private HikariDataSource dataSource;
+  private WorldGuardBankerRegion worldGuardBankerRegion;
+
+  @Override
+  public void onLoad() {
+    if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+      worldGuardBankerRegion = new WorldGuardBankerRegion();
+      worldGuardBankerRegion.registerFlag();
+      getLogger().info("Registered WorldGuard has-banker flag.");
+    } else {
+      getLogger().warning("WorldGuard not found; bank access will not be restricted to banker regions.");
+    }
+  }
 
   @Override
   public void onEnable() {
@@ -46,6 +61,10 @@ public class WheatEconomyPlugin extends JavaPlugin {
 
       Bank bank = new Bank(bankRepository, this, transactingPlayerIds);
       BankLeaderboard bankLeaderboard = new BankLeaderboard(bankRepository, this);
+
+      BankerLocationPolicy locationPolicy = worldGuardBankerRegion != null
+          ? worldGuardBankerRegion
+          : new AlwaysNearBankerPolicy();
 
       getServer().getPluginManager().registerEvents(new BankTransactionListener(transactingPlayerIds), this);
 
@@ -81,7 +100,7 @@ public class WheatEconomyPlugin extends JavaPlugin {
       this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event -> {
         Commands commands = event.registrar();
 
-        commands.register(new BankCommand(bank, bankLeaderboard).create(), "Wheat economy bank commands");
+        commands.register(new BankCommand(bank, bankLeaderboard, locationPolicy).create(), "Wheat economy bank commands");
       });
     } catch (SQLException e) {
       getLogger().log(Level.SEVERE, "Failed to initialize the wheat economy database. Disabling plugin.", e);
