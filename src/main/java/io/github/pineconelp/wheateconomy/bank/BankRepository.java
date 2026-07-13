@@ -87,6 +87,54 @@ public class BankRepository {
     }
   }
 
+  public List<LedgerEntry> getLedgerForPlayer(UUID playerId, int pageSize, int pageNumber) throws SQLException {
+    int offset = (pageNumber - 1) * pageSize;
+
+    try (Connection conn = dataSource.getConnection()) {
+      try (PreparedStatement stmt = conn.prepareStatement(
+              "SELECT id, type, balance_change, balance_after, target_player_id, created_at " +
+                      "FROM bank_ledger " +
+                      "WHERE player_id = ? " +
+                      "ORDER BY created_at DESC " +
+                      "LIMIT ? OFFSET ?")) {
+        stmt.setString(1, playerId.toString());
+        stmt.setInt(2, pageSize);
+        stmt.setInt(3, offset);
+
+        List<LedgerEntry> entries = new ArrayList<>();
+        try (ResultSet rs = stmt.executeQuery()) {
+          while (rs.next()) {
+            entries.add(new LedgerEntry(
+                    rs.getString("id"),
+                    rs.getString("type"),
+                    rs.getInt("balance_change"),
+                    rs.getInt("balance_after"),
+                    rs.getString("target_player_id"),
+                    rs.getLong("created_at")
+            ));
+          }
+        }
+        return entries;
+      }
+    }
+  }
+
+  public int getTransactionCount(UUID playerId) throws SQLException {
+    try (Connection conn = dataSource.getConnection()) {
+      try (PreparedStatement stmt = conn.prepareStatement(
+              "SELECT COUNT(*) as count FROM bank_ledger WHERE player_id = ?")) {
+        stmt.setString(1, playerId.toString());
+
+        try (ResultSet rs = stmt.executeQuery()) {
+          if (rs.next()) {
+            return rs.getInt("count");
+          }
+          return 0;
+        }
+      }
+    }
+  }
+
   public void depositByPlayerId(UUID playerId, int amountToDeposit, LedgerEntryType type) throws SQLException {
     try (Connection conn = dataSource.getConnection()) {
       conn.setAutoCommit(false);

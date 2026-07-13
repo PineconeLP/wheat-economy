@@ -54,6 +54,7 @@ public class BankCommand {
         .then(createGetCommand())
         .then(createSetCommand())
         .then(createAddCommand())
+        .then(createHistoryCommand())
         .build();
   }
 
@@ -330,4 +331,20 @@ public class BankCommand {
       return builder.buildFuture();
     };
   }
+
+    private LiteralArgumentBuilder<CommandSourceStack> createHistoryCommand() {
+        return Commands.literal("history")
+                .requires(ctx -> ctx.getSender().hasPermission("wheateconomy.bank.admin"))
+                .then(Commands.argument("target", StringArgumentType.string())
+                        .suggests(suggestOnlinePlayerNames())
+                        .then(Commands.argument("page", IntegerArgumentType.integer(1))
+                                .executes((ctx) -> {
+                                    CommandSender sender = ctx.getSource().getSender();
+                                    String target = ctx.getArgument("target", String.class);
+                                    int page = ctx.getArgument("page", Integer.class);
+
+                                    bank.showTransactionHistory(sender, target, page);
+                                    return Command.SINGLE_SUCCESS;
+                                })));
+    }
 }

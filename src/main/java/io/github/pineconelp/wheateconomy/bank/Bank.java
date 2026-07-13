@@ -1,12 +1,19 @@
 package io.github.pineconelp.wheateconomy.bank;
 
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
+import java.util.List;
 
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +29,13 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+
 public class Bank {
+  private static final int ENTRIES_PER_PAGE = 5;
+  private static final String SEPARATOR = "=".repeat(51);
+  private static final DateTimeFormatter DATE_FORMAT =
+          DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
+
   private BankRepository bankRepository;
   private Plugin plugin;
   private Set<UUID> transactingPlayerIds;
@@ -453,5 +466,146 @@ public class Bank {
         transactingPlayerIds.remove(targetPlayerId);
       }
     });
+  }
+
+  public void showTransactionHistory(CommandSender sender, String targetName, int page) {
+
+    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+      try {
+        Player targetPlayer = Bukkit.getPlayerExact(targetName);
+
+        if (targetPlayer == null) {
+          Bukkit.getScheduler().runTask(plugin, () ->
+                  sender.sendMessage(Component.text("Player not found: " + targetName, NamedTextColor.RED)));
+          return;
+        }
+
+        UUID targetId = targetPlayer.getUniqueId();
+        List<LedgerEntry> entries = bankRepository.getLedgerForPlayer(
+                targetId, ENTRIES_PER_PAGE, page);
+
+        int totalTransactions = bankRepository.getTransactionCount(targetId);
+        int maxPages = (totalTransactions + ENTRIES_PER_PAGE - 1)
+                / ENTRIES_PER_PAGE;
+
+        Bukkit.getScheduler().runTask(plugin, () ->
+                renderHistoryPage(sender, targetName, entries, page, maxPages, totalTransactions));
+
+      } catch (SQLException e) {
+        plugin.getLogger().log(Level.SEVERE, "Failed to load transaction history", e);
+        Bukkit.getScheduler().runTask(plugin, () ->
+                sender.sendMessage(Component.text("Failed to load history. See console for details.", NamedTextColor.RED)));
+      }
+    });
+  }
+
+  private void renderHistoryPage(CommandSender sender, String targetName, List<LedgerEntry> entries,
+                                 int page, int maxPages, int totalTransactions) {
+    if (entries.isEmpty()) {
+      if (page > maxPages && maxPages > 0) {
+        sender.sendMessage(Component.text("Page " + page + " does not exist. Max pages: " + maxPages, NamedTextColor.RED));
+      } else {
+        sender.sendMessage(Component.text("No transaction history found for " + targetName, NamedTextColor.YELLOW));
+      }
+      return;
+    }
+
+    sendHeader(sender, targetName, page, maxPages, totalTransactions);
+
+    for (LedgerEntry entry : entries) {
+      sender.sendMessage(formatTransactionLine(entry));
+    }
+
+    sender.sendMessage(Component.text(SEPARATOR, NamedTextColor.GOLD));
+    sender.sendMessage(buildNavigation(targetName, page, maxPages));
+  }
+
+  private void sendHeader(CommandSender sender, String targetName, int page, int maxPages, int totalTransactions) {
+    sender.sendMessage(Component.text(SEPARATOR, NamedTextColor.GOLD));
+    sender.sendMessage(Component.text("Transaction History: " + targetName, NamedTextColor.GOLD)
+            .decorate(TextDecoration.BOLD));
+    sender.sendMessage(Component.text(
+            "Page " + page + " of " + maxPages + " (Total: " + totalTransactions + " transactions)",
+            NamedTextColor.GRAY));
+    sender.sendMessage(Component.text(SEPARATOR, NamedTextColor.GOLD));
+  }
+
+  private Component formatTransactionLine(LedgerEntry entry) {
+    String date = DATE_FORMAT.format(Instant.ofEpochMilli(entry.getCreatedAt()));
+    String type = prettifyType(entry.getType());
+    String change = String.format("%+d", entry.getBalanceChange());
+    String balance = String.valueOf(entry.getBalanceAfter());
+    NamedTextColor changeColor = entry.getBalanceChange() >= 0 ? NamedTextColor.GREEN : NamedTextColor.RED;
+
+    return Component.text()
+            .append(Component.text("[" + date + "] ", NamedTextColor.GRAY))
+            .append(Component.text(type, getTypeColor(entry.getType())))
+            .append(Component.text(" | ", NamedTextColor.GRAY))
+            .append(Component.text(change, changeColor))
+            .append(Component.text(" | Balance: ", NamedTextColor.GRAY))
+            .append(Component.text(balance, NamedTextColor.YELLOW))
+            .append(resolveTargetInfo(entry))
+            .build();
+  }
+
+  private Component resolveTargetInfo(LedgerEntry entry) {
+    String targetId = entry.getTargetPlayerId();
+    if (targetId == null || targetId.isEmpty()) {
+      return Component.empty();
+    }
+    try {
+      UUID targetUUID = UUID.fromString(targetId);
+      OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(targetUUID);
+      if (offlinePlayer.getName() == null) {
+        return Component.empty();
+      }
+      String arrow = "SEND".equals(entry.getType()) ? " -> " : " <- ";
+      return Component.text(arrow + offlinePlayer.getName(), NamedTextColor.DARK_GRAY);
+    } catch (IllegalArgumentException e) {
+      return Component.empty();
+    }
+  }
+
+  private Component buildNavigation(String targetName, int page, int maxPages) {
+    TextComponent.Builder nav = Component.text();
+    if (page > 1) {
+      nav.append(pageLink("<< Previous", targetName, page - 1))
+              .append(Component.text("  |  ", NamedTextColor.GRAY));
+    }
+    nav.append(Component.text("Page " + page + "/" + maxPages, NamedTextColor.YELLOW));
+    if (page < maxPages) {
+      nav.append(Component.text("  |  ", NamedTextColor.GRAY))
+              .append(pageLink("Next >>", targetName, page + 1));
+    }
+    return nav.build();
+  }
+
+  private Component pageLink(String label, String targetName, int targetPage) {
+    return Component.text(label, NamedTextColor.AQUA)
+            .clickEvent(ClickEvent.runCommand("/bank history " + targetName + " " + targetPage))
+            .hoverEvent(HoverEvent.showText(Component.text("Go to page " + targetPage)));
+  }
+
+  private NamedTextColor getTypeColor(String type) {
+    return switch(type) {
+      case "DEPOSIT" -> NamedTextColor.GREEN;
+      case "WITHDRAW" -> NamedTextColor.RED;
+      case "SEND" -> NamedTextColor.BLUE;
+      case "RECEIVE" -> NamedTextColor.LIGHT_PURPLE;
+      case "ADMIN_SET" -> NamedTextColor.GOLD;
+      default -> NamedTextColor.WHITE;
+    };
+  }
+
+  private String prettifyType(String type) {
+    return switch (type) {
+      case "DEPOSIT" -> "Deposit";
+      case "WITHDRAW" -> "Withdraw";
+      case "SEND" -> "Send";
+      case "RECEIVE" -> "Receive";
+      case "ADMIN_SET" -> "Admin Set";
+      case "ADMIN_ADD" -> "Admin Add";
+      default -> type;
+    };
   }
 }
