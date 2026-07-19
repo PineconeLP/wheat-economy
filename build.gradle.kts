@@ -41,6 +41,13 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
     testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
+    testImplementation("net.milkbowl.vault:VaultUnlockedAPI:2.20") {
+        exclude(group = "org.bukkit", module = "bukkit")
+    }
+    testImplementation("com.sk89q.worldguard:worldguard-bukkit:7.0.16")
     testImplementation("org.mockbukkit.mockbukkit:mockbukkit-v1.21:4.110.0")
     testImplementation(platform("org.junit:junit-bom:6.0.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")

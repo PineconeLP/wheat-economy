@@ -1,6 +1,7 @@
 package io.github.pineconelp.wheateconomy.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -40,6 +41,30 @@ class BankDepositTest extends EconomyTest {
   }
 
   @Test
+  void depositAll_convertsHayBalesAndWheatIntoOneBalance() throws Exception {
+    PlayerMock player = addPlayerWithItems(Material.HAY_BLOCK, 2);
+    player.getInventory().addItem(new org.bukkit.inventory.ItemStack(Material.WHEAT, 5));
+
+    player.performCommand("bank deposit all");
+    drainScheduler();
+
+    assertEquals(23, balanceOf(player.getUniqueId()));
+    assertEquals(0, countInInventory(player, Material.HAY_BLOCK));
+    assertEquals(0, countInInventory(player, Material.WHEAT));
+  }
+
+  @Test
+  void depositAll_withEmptyInventory_recordsNothing() throws Exception {
+    PlayerMock player = addPlayer();
+
+    player.performCommand("bank deposit all");
+    drainScheduler();
+
+    assertEquals(0, balanceOf(player.getUniqueId()));
+    assertTrue(ledgerOf(player.getUniqueId()).isEmpty());
+  }
+
+  @Test
   void depositWheatAmount_depositsOnlyTheRequestedAmount() throws Exception {
     PlayerMock player = addPlayerWithItems(Material.WHEAT, 64);
 
@@ -70,5 +95,17 @@ class BankDepositTest extends EconomyTest {
 
     assertEquals(0, balanceOf(player.getUniqueId()));
     assertEquals(5, countInInventory(player, Material.WHEAT));
+  }
+
+  @Test
+  void depositWheatAmount_doesNotSpendHayBalesAsLooseWheat() throws Exception {
+    PlayerMock player = addPlayerWithItems(Material.HAY_BLOCK, 1);
+
+    player.performCommand("bank deposit wheat 1");
+    drainScheduler();
+
+    assertEquals(0, balanceOf(player.getUniqueId()));
+    assertEquals(1, countInInventory(player, Material.HAY_BLOCK));
+    assertTrue(ledgerOf(player.getUniqueId()).isEmpty());
   }
 }

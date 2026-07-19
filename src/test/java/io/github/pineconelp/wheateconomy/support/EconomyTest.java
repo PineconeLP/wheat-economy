@@ -12,6 +12,7 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.inventory.ItemStack;
 import org.sqlite.SQLiteDataSource;
 import org.junit.jupiter.api.AfterEach;
@@ -87,6 +88,32 @@ public abstract class EconomyTest {
     }
 
     return total;
+  }
+
+  protected void fillStorageWith(PlayerMock player, Material type) {
+    ItemStack[] storageContents = player.getInventory().getStorageContents();
+
+    for (int slotIndex = 0; slotIndex < storageContents.length; slotIndex++) {
+      storageContents[slotIndex] = new ItemStack(type, 64);
+    }
+
+    player.getInventory().setStorageContents(storageContents);
+  }
+
+  protected void setStorageSlot(PlayerMock player, int slotIndex, Material type, int amount) {
+    ItemStack[] storageContents = player.getInventory().getStorageContents();
+    storageContents[slotIndex] = new ItemStack(type, amount);
+    player.getInventory().setStorageContents(storageContents);
+  }
+
+  protected World world() {
+    World existingWorld = server.getWorld("world");
+
+    if (existingWorld != null) {
+      return existingWorld;
+    }
+
+    return server.addSimpleWorld("world");
   }
 
   protected int balanceOf(UUID playerId) throws SQLException {
