@@ -65,6 +65,20 @@ class BankWithdrawTest extends EconomyTest {
   }
 
   @Test
+  void withdrawWheatAll_deductsOnlyWhatFitsInInventory() throws Exception {
+    PlayerMock player = addPlayer();
+    fillStorageWith(player, Material.DIRT);
+    setStorageSlot(player, 0, Material.WHEAT, 63);
+    seedBalance(player.getUniqueId(), 10);
+
+    player.performCommand("bank withdraw wheat all");
+    drainScheduler();
+
+    assertEquals(9, balanceOf(player.getUniqueId()));
+    assertEquals(64, countInInventory(player, Material.WHEAT));
+  }
+
+  @Test
   void withdrawHayBaleAmount_convertsNineWheatIntoOneHayBale() throws Exception {
     PlayerMock player = addPlayer();
     seedBalance(player.getUniqueId(), 20);
@@ -86,5 +100,18 @@ class BankWithdrawTest extends EconomyTest {
 
     assertEquals(5, balanceOf(player.getUniqueId()));
     assertEquals(0, countInInventory(player, Material.WHEAT));
+  }
+
+  @Test
+  void withdrawHayBaleAll_withLessThanNineWheat_changesNothing() throws Exception {
+    PlayerMock player = addPlayer();
+    seedBalance(player.getUniqueId(), 8);
+
+    player.performCommand("bank withdraw haybale all");
+    drainScheduler();
+
+    assertEquals(8, balanceOf(player.getUniqueId()));
+    assertEquals(0, countInInventory(player, Material.HAY_BLOCK));
+    assertTrue(ledgerOf(player.getUniqueId()).isEmpty());
   }
 }
