@@ -81,7 +81,10 @@ public class WheatGrowthListener implements Listener {
       return;
     }
 
-    if (event.getTo() != Material.WHEAT) {
+    boolean isPlantingWheat = event.getTo() == Material.WHEAT;
+    boolean isHarvestingWheat = event.getBlock().getType() == Material.WHEAT;
+
+    if (!isPlantingWheat && !isHarvestingWheat) {
       return;
     }
 
