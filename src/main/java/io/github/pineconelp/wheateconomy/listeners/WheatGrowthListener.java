@@ -72,20 +72,7 @@ public class WheatGrowthListener implements Listener {
       return;
     }
 
-    if (isWheatGrowthDenied(event.getBlock())) {
-      event.setCancelled(true);
-      return;
-    }
-
-    if (!wheatGrowthSimulator.isWithinGrowthBoundaries(event.getBlock())) {
-      event.setCancelled(true);
-      return;
-    }
-
-    if (Math.random() < 0.50) {
-      event.setCancelled(true);
-      return;
-    }
+    event.setCancelled(true);
   }
 
   @EventHandler
@@ -98,20 +85,7 @@ public class WheatGrowthListener implements Listener {
       return;
     }
 
-    if (isWheatGrowthDenied(event.getBlock())) {
-      event.setCancelled(true);
-      return;
-    }
-
-    if (!wheatGrowthSimulator.isWithinGrowthBoundaries(event.getBlock())) {
-      event.setCancelled(true);
-      return;
-    }
-
-    if (Math.random() < 0.50) {
-      event.setCancelled(true);
-      return;
-    }
+    event.setCancelled(true);
   }
 
   private boolean isWheatGrowthDenied(Block block) {
